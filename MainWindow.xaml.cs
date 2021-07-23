@@ -23,6 +23,7 @@ using Point = System.Windows.Point;
 using Color = System.Windows.Media.Color;
 using Rectangle = System.Windows.Shapes.Rectangle;
 
+// Всё равно получился набросок. Ещё можно улучшать код раза в 3.
 namespace VectorEditor
 {
     /// <summary>
@@ -92,7 +93,7 @@ namespace VectorEditor
                 VerticalAlignment = VerticalAlignment.Top,
                 Width = 10,
                 Height = 10,
-                Margin = new Thickness(left, top, 0, 0)
+                Margin = new Thickness(left - 5, top - 5, 0, 0)
             };
         }
 
@@ -213,14 +214,32 @@ namespace VectorEditor
             Thickness ShapeMargin = ActiveShape.Margin;
             if (ActiveShape is Polyline line)
             {
-                Controlling.Margin = line.Margin;
+                Point TopLeft = line.Points.First();
+                foreach (var p in line.Points)
+                {
+                    if (p.X < TopLeft.X || p.Y < TopLeft.Y)
+                    {
+                        TopLeft = p;
+                    }
+                }
+                Controlling.Margin = new(line.Margin.Left + TopLeft.X, line.Margin.Top + TopLeft.Y, 0, 0);
+                Point BottomRight = line.Points.First();
+                foreach (var p in line.Points)
+                {
+                    if (p.X > BottomRight.X || p.Y > BottomRight.Y)
+                    {
+                        BottomRight = p;
+                    }
+                }
+                Controlling.Width = BottomRight.X - TopLeft.X;
+                Controlling.Height = BottomRight.Y - TopLeft.Y;
             }
             else
             {
                 Controlling.Width = Math.Max(ActiveShape.Height, ActiveShape.Width);
+                Controlling.Margin = ShapeMargin;
+                Controlling.Height = Controlling.Width;
             }
-            Controlling.Height = Controlling.Width;
-            Controlling.Margin = ShapeMargin;
         }
 
 
@@ -312,7 +331,8 @@ namespace VectorEditor
                     if (ActiveShape is Ellipse ellipse)
                     {
                         ellipse.Margin = Margin;
-                        CurrentLine.Points[PointsControllers[ellipse]] = new Point(Vector.X - CurrentLine.Margin.Left, Vector.Y - CurrentLine.Margin.Top);
+                        CurrentLine.Points[PointsControllers[ellipse]] = new Point(Vector.X - CurrentLine.Margin.Left + 5,
+                            Vector.Y - CurrentLine.Margin.Top + 5);
                     }
                     else
                     {
